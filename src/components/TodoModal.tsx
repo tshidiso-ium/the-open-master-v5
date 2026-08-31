@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ProjectTodo, ToDoStatus } from "../types/project";
+import type { ProjectTodo, ToDoPriority, ToDoStatus } from "../types/project";
 
 interface TodoModalProps {
   open: boolean;
@@ -13,6 +13,7 @@ const emptyTodo: ProjectTodo = {
   title: "",
   description: "",
   status: "todo",
+  priority: "medium",
   dueDate: ""
 };
 
@@ -83,7 +84,7 @@ export function TodoModal({ open, todo, onClose, onSubmit }: TodoModalProps) {
             />
           </label>
 
-          <div className="form-grid">
+          <div className="form-grid todo-form-grid">
             <label className="form-field">
               <span>Due Date</span>
               <input
@@ -102,6 +103,21 @@ export function TodoModal({ open, todo, onClose, onSubmit }: TodoModalProps) {
                 <option value="todo">To Do</option>
                 <option value="in-progress">In Progress</option>
                 <option value="done">Done</option>
+              </select>
+            </label>
+
+            <label className="form-field">
+              <span>Priority</span>
+              <select
+                value={form.priority}
+                onChange={(event) => setForm((current) => ({
+                  ...current,
+                  priority: event.target.value as ToDoPriority
+                }))}
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
               </select>
             </label>
           </div>

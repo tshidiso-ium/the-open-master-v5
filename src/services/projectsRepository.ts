@@ -10,7 +10,13 @@ import {
   type Unsubscribe
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Project, ProjectInput, ProjectTodo, ToDoStatus } from "../types/project";
+import type {
+  Project,
+  ProjectInput,
+  ProjectTodo,
+  ToDoPriority,
+  ToDoStatus
+} from "../types/project";
 
 const COLLECTION_NAME = "projects";
 
@@ -30,12 +36,15 @@ function normalizeTodo(value: unknown, index: number): ProjectTodo | null {
   const todo = value as Partial<ProjectTodo>;
   const status: ToDoStatus =
     todo.status === "in-progress" || todo.status === "done" ? todo.status : "todo";
+  const priority: ToDoPriority =
+    todo.priority === "low" || todo.priority === "high" ? todo.priority : "medium";
 
   return {
     id: typeof todo.id === "string" && todo.id ? todo.id : `${index}`,
     title: typeof todo.title === "string" ? todo.title : "",
     description: typeof todo.description === "string" ? todo.description : "",
     status,
+    priority,
     dueDate: typeof todo.dueDate === "string" ? todo.dueDate : ""
   };
 }

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ProjectFormModal } from "./components/ProjectFormModal";
 import { TodoModal } from "./components/TodoModal";
 import { ModelViewer } from "./components/ModelViewer";
+import { ProjectTasksList } from "./components/ProjectTasksList";
+import { SearchBox } from "./components/SearchBox";
 import { firebaseEnabled } from "./services/firebase";
 import {
   createProject,
@@ -43,7 +45,30 @@ function getProjectColor(id: string) {
   return projectColors[total % projectColors.length];
 }
 
+function normalizeImportedTodo(value: unknown, fallbackId: string): ProjectTodo | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const todo = value as Partial<ProjectTodo>;
+
+  return {
+    id: typeof todo.id === "string" && todo.id ? todo.id : fallbackId,
+    title: typeof todo.title === "string" ? todo.title : "",
+    description: typeof todo.description === "string" ? todo.description : "",
+    status: todo.status === "in-progress" || todo.status === "done" ? todo.status : "todo",
+    priority: todo.priority === "low" || todo.priority === "high" ? todo.priority : "medium",
+    dueDate: typeof todo.dueDate === "string" ? todo.dueDate : ""
+  };
+}
+
 function normalizeImportedProject(value: Partial<Project>, fallbackId: string): Project {
+  const todos = Array.isArray(value.todos)
+    ? value.todos
+      .map((todo, index) => normalizeImportedTodo(todo, `${fallbackId}-todo-${index}`))
+      .filter((todo): todo is ProjectTodo => Boolean(todo))
+    : [];
+
   return {
     id: typeof value.id === "string" && value.id ? value.id : fallbackId,
     name: typeof value.name === "string" ? value.name : "Imported Project",
@@ -54,7 +79,7 @@ function normalizeImportedProject(value: Partial<Project>, fallbackId: string): 
     finishDate: typeof value.finishDate === "string"
       ? value.finishDate.slice(0, 10)
       : new Date().toISOString().slice(0, 10),
-    todos: Array.isArray(value.todos) ? value.todos : []
+    todos
   };
 }
 
@@ -357,14 +382,13 @@ export default function App() {
             {
               route.name === "projects" ? 
             <div className="projects-toolbar">
-              <label className="search-field project-search-field">
-                <span className="material-symbols-rounded">search</span>
-                <input
-                  value={projectSearch}
-                  onChange={(event) => setProjectSearch(event.target.value)}
-                  placeholder="Search projects"
-                />
-              </label>
+              <SearchBox
+                value={projectSearch}
+                onChange={setProjectSearch}
+                placeholder="Search projects"
+                ariaLabel="Search projects"
+                className="project-search-field"
+              />
               {projectSearch && (
                 <button className="secondary-button" type="button" onClick={() => setProjectSearch("")}>
                   Clear
@@ -476,33 +500,22 @@ export default function App() {
                       <div className="todos-header">
                         <h2>To-Do</h2>
                         <div className="todo-tools">
-                          <label className="search-field">
-                            <span className="material-symbols-rounded">search</span>
-                            <input value={todoSearch} onChange={(event) => setTodoSearch(event.target.value)} placeholder="Search" />
-                          </label>
+                          <SearchBox
+                            value={todoSearch}
+                            onChange={setTodoSearch}
+                            placeholder="Search to-dos"
+                            ariaLabel="Search to-dos"
+                          />
                           <button className="icon-button" type="button" aria-label="Add to-do" title="Add to-do" onClick={() => { setEditingTodo(null); setTodoModalOpen(true); }}>
                             <span className="material-symbols-rounded">add</span>
                           </button>
                         </div>
                       </div>
 
-                      <div className="todos-list">
-                        {visibleTodos.length === 0 && <p className="empty-state">No to-dos found.</p>}
-                        {visibleTodos.map((todo) => (
-                          <button
-                            className={`todo-item ${todo.status}`}
-                            key={todo.id}
-                            type="button"
-                            onClick={() => { setEditingTodo(todo); setTodoModalOpen(true); }}
-                          >
-                            <span className="todo-title">
-                              <span className="material-symbols-rounded">construction</span>
-                              {todo.title}
-                            </span>
-                            <span>{todo.dueDate || "No date"}</span>
-                          </button>
-                        ))}
-                      </div>
+                      <ProjectTasksList
+                        todos={visibleTodos}
+                        onTodoClick={(todo) => { setEditingTodo(todo); setTodoModalOpen(true); }}
+                      />
                     </article>
                   </div>
 

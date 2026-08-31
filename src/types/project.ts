@@ -1,12 +1,14 @@
 export type ProjectStatus = "pending" | "active" | "finished";
 export type UserRole = "architect" | "engineer" | "developer";
 export type ToDoStatus = "todo" | "in-progress" | "done";
+export type ToDoPriority = "low" | "medium" | "high";
 
 export interface ProjectTodo {
   id: string;
   title: string;
   description: string;
   status: ToDoStatus;
+  priority: ToDoPriority;
   dueDate: string;
 }
 
